@@ -1,0 +1,139 @@
+var channelABI = [{
+    "constant": false,
+    "inputs": [{
+        "name": "id",
+        "type": "bytes32"
+    }, {
+        "name": "sign",
+        "type": "bytes"
+    }, {
+        "name": "playerBet",
+        "type": "uint256"
+    }, {
+        "name": "bankrollBet",
+        "type": "uint256"
+    }, {
+        "name": "time",
+        "type": "uint256"
+    }],
+    "name": "closeByConsent",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "id",
+        "type": "bytes32"
+    }, {
+        "name": "sign",
+        "type": "bytes"
+    }, {
+        "name": "playerBet",
+        "type": "uint256"
+    }, {
+        "name": "bankrollBet",
+        "type": "uint256"
+    }, {
+        "name": "time",
+        "type": "uint256"
+    }],
+    "name": "update",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [{
+        "name": "",
+        "type": "bytes32"
+    }],
+    "name": "channels",
+    "outputs": [{
+        "name": "statte",
+        "type": "uint8"
+    }, {
+        "name": "player",
+        "type": "address"
+    }, {
+        "name": "bankroll",
+        "type": "address"
+    }, {
+        "name": "startDate",
+        "type": "uint256"
+    }, {
+        "name": "channelTimeout",
+        "type": "uint256"
+    }, {
+        "name": "closing_address",
+        "type": "address"
+    }, {
+        "name": "player_bet",
+        "type": "uint256"
+    }, {
+        "name": "bankroll_bet",
+        "type": "uint256"
+    }, {
+        "name": "secret",
+        "type": "bytes32"
+    }],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "id",
+        "type": "bytes32"
+    }, {
+        "name": "partner",
+        "type": "address"
+    }, {
+        "name": "deposit",
+        "type": "uint256"
+    }, {
+        "name": "time",
+        "type": "uint256"
+    }, {
+        "name": "sign",
+        "type": "bytes"
+    }],
+    "name": "open",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "id",
+        "type": "bytes32"
+    }],
+    "name": "closeByTime",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": false,
+        "name": "",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "name": "",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "name": "",
+        "type": "string"
+    }, {
+        "indexed": false,
+        "name": "",
+        "type": "uint256"
+    }, {
+        "indexed": false,
+        "name": "",
+        "type": "uint256"
+    }],
+    "name": "channel",
+    "type": "event"
+}]

@@ -19,7 +19,7 @@ var upgrader = websocket.Upgrader{
 type Message struct {
 	From    string `json:"from"`
 	For     string `json:"for"`
-	Command string `json:"type"`
+	Command string `json:"command"`
 	Channel string `json:"channel"`
 	Message string `json:"message"`
 }

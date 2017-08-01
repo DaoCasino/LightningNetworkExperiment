@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>channel</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+     <script src="https://cdn.rawgit.com/ConsenSys/eth-lightwallet/master/dist/lightwallet.js"></script> 
+    <script src="https://cdn.rawgit.com/ethereum/web3.js/develop/dist/web3.min.js"></script>
+    <script src="erc20abi.js"></script>
+    <script src="channelABI.js"></script>
+    <script src="channel.js"></script>
+
+</head>
+
+<body>
+    <div class="container text-center">
+        <div class="row">
+            <h1>BANKROLLER</h1>
+        </div>
+        <div class="row">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <h1>
+                </h1>
+                <button type="button" onclick="create();" class="create btn btn-info">create wallet</button>
+                <div class="row text-left" style="display:none" id="info">
+                    <h3>Address info:</h3>
+                    <hr>
+                    <h4 id="openkey">address: 0x.....</h4>
+                    <h4 id="balance">ETH balance: 0 ETH</h4>
+                    <h4 id="token">BET balance: 0 BET</h4>
+                </div>
+
+
+                <div class="row text-left" style="display:none" id="channel">
+                    <h3>Channel info:</h3>
+                    <div id="msg" style="display:none">
+                        <h3 id="msgtext"></h3>
+                        <button id="msgbtn" class="btn btn-success">ok</button>
+                    </div>
+                    <hr>
+
+                    <div class="col-md-6" id="approve">
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                            <button onclick="approve();" class="btn btn-success" type="button">approve</button>
+                             </span>
+                            <input type="text" id="approveValue" class="form-control" placeholder="approve values">
+                            <span class="input-group-addon">BET</span>
+                        </div>
+                    </div>
+
+                    <div id="opens" style="display:none">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-btn">
+                            <button onclick="openChannel();" class="btn btn-success" type="button">open</button>
+                             </span>
+                                <input type="text"  id="partner" class="form-control" placeholder="partner address">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" id="deposit" class="form-control" placeholder="deposit">
+                                <span class="input-group-addon">BET</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" id="time" class="form-control" placeholder="time">
+                                <span class="input-group-addon">minute</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="channelInfo" style="display:none">
+                        <h4 id="state">channel is open</h4>
+                        <h4 id="bal">deposit (YOU/PARTNER): 0 BET / 10 BET</h4>
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-btn">
+                                    <button type="button" onclick="update();" class="btn btn-warning">update channel</button>
+                             </span>
+                                <input type="text" id="updatePlayer" class="form-control" placeholder="your value">
+                                <span class="input-group-addon">BET</span>
+                                <input type="text" id="updateBankroll" class="form-control" placeholder="bankroll value">
+                                <span class="input-group-addon">BET</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="close();" class="btn btn-danger">close channel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+</script>
+
+</html>
