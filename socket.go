@@ -21,7 +21,7 @@ type Message struct {
 	For     string `json:"for"`
 	Command string `json:"command"`
 	Channel string `json:"channel"`
-	Message string `json:"message"`
+	Sign    string `json:"sign"`
 }
 
 func main() {

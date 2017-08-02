@@ -5,14 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>channel</title>
+    <title>bankroller</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
      <script src="https://cdn.rawgit.com/ConsenSys/eth-lightwallet/master/dist/lightwallet.js"></script> 
     <script src="https://cdn.rawgit.com/ethereum/web3.js/develop/dist/web3.min.js"></script>
     <script src="erc20abi.js"></script>
     <script src="channelABI.js"></script>
-    <script src="channel.js"></script>
+    <script src="bankroller.js"></script>
 
 </head>
 
@@ -26,8 +26,7 @@
             <div class="col-md-8">
                 <h1>
                 </h1>
-                <button type="button" onclick="create();" class="create btn btn-info">create wallet</button>
-                <div class="row text-left" style="display:none" id="info">
+                <div class="row text-left" id="info">
                     <h3>Address info:</h3>
                     <hr>
                     <h4 id="openkey">address: 0x.....</h4>

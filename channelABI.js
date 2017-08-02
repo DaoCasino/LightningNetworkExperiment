@@ -1,101 +1,29 @@
 var channelABI = [{
     "constant": false,
     "inputs": [{
-        "name": "id",
-        "type": "bytes32"
-    }, {
-        "name": "sign",
-        "type": "bytes"
-    }, {
-        "name": "playerBet",
-        "type": "uint256"
-    }, {
-        "name": "bankrollBet",
-        "type": "uint256"
-    }, {
-        "name": "time",
-        "type": "uint256"
-    }],
-    "name": "closeByConsent",
-    "outputs": [],
-    "payable": false,
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "id",
-        "type": "bytes32"
-    }, {
-        "name": "sign",
-        "type": "bytes"
-    }, {
-        "name": "playerBet",
-        "type": "uint256"
-    }, {
-        "name": "bankrollBet",
-        "type": "uint256"
-    }, {
-        "name": "time",
-        "type": "uint256"
-    }],
-    "name": "update",
-    "outputs": [],
-    "payable": false,
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "bytes32"
-    }],
-    "name": "channels",
-    "outputs": [{
-        "name": "statte",
-        "type": "uint8"
-    }, {
         "name": "player",
         "type": "address"
     }, {
-        "name": "bankroll",
-        "type": "address"
-    }, {
-        "name": "startDate",
+        "name": "playerDeposit",
         "type": "uint256"
     }, {
-        "name": "channelTimeout",
+        "name": "bankrollDeposit",
         "type": "uint256"
     }, {
-        "name": "closing_address",
-        "type": "address"
-    }, {
-        "name": "player_bet",
-        "type": "uint256"
-    }, {
-        "name": "bankroll_bet",
-        "type": "uint256"
-    }, {
-        "name": "secret",
-        "type": "bytes32"
-    }],
-    "payable": false,
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "id",
-        "type": "bytes32"
-    }, {
-        "name": "partner",
-        "type": "address"
-    }, {
-        "name": "deposit",
+        "name": "nonce",
         "type": "uint256"
     }, {
         "name": "time",
         "type": "uint256"
     }, {
-        "name": "sign",
-        "type": "bytes"
+        "name": "v",
+        "type": "uint8"
+    }, {
+        "name": "r",
+        "type": "bytes32"
+    }, {
+        "name": "s",
+        "type": "bytes32"
     }],
     "name": "open",
     "outputs": [],
@@ -104,36 +32,86 @@ var channelABI = [{
 }, {
     "constant": false,
     "inputs": [{
-        "name": "id",
+        "name": "playerDeposit",
+        "type": "uint256"
+    }, {
+        "name": "bankrollDeposit",
+        "type": "uint256"
+    }, {
+        "name": "nonce",
+        "type": "uint256"
+    }, {
+        "name": "v",
+        "type": "uint8"
+    }, {
+        "name": "r",
+        "type": "bytes32"
+    }, {
+        "name": "s",
         "type": "bytes32"
     }],
+    "name": "update",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "playerDeposit",
+        "type": "uint256"
+    }, {
+        "name": "bankrollDeposit",
+        "type": "uint256"
+    }, {
+        "name": "nonce",
+        "type": "uint256"
+    }, {
+        "name": "v",
+        "type": "uint8"
+    }, {
+        "name": "r",
+        "type": "bytes32"
+    }, {
+        "name": "s",
+        "type": "bytes32"
+    }],
+    "name": "closeByConsent",
+    "outputs": [],
+    "payable": false,
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [],
     "name": "closeByTime",
     "outputs": [],
     "payable": false,
     "type": "function"
 }, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "",
+    "constant": true,
+    "inputs": [],
+    "name": "c",
+    "outputs": [{
+        "name": "player",
         "type": "address"
     }, {
-        "indexed": false,
-        "name": "",
+        "name": "bankroller",
         "type": "address"
     }, {
-        "indexed": false,
-        "name": "",
-        "type": "string"
-    }, {
-        "indexed": false,
-        "name": "",
+        "name": "playerDeposit",
         "type": "uint256"
     }, {
-        "indexed": false,
-        "name": "",
+        "name": "bankrollDeposit",
         "type": "uint256"
+    }, {
+        "name": "nonce",
+        "type": "uint256"
+    }, {
+        "name": "endTime",
+        "type": "uint256"
+    }, {
+        "name": "open",
+        "type": "bool"
     }],
-    "name": "channel",
-    "type": "event"
+    "payable": false,
+    "type": "function"
 }]
