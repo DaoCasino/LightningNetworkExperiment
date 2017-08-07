@@ -251,7 +251,7 @@ function sendMsg(chan, command) {
 
 function addRow() {
     $("#table").prepend([
-        '<tr id=' + channel.nonce + ' class="warning">',
+        '<tr id=' + channel.nonce + ' class="success">',
         '<th>' + channel.nonce + '</th>',
         '<td >' + channel.player + '</td>',
         '<td>' + channel.playerBalance + '</td>',
@@ -364,5 +364,18 @@ function approve() {
         }
     })
 }
+
+var t = setInterval(function () {
+    req("eth_getBalance", ["0x" + ks.getAddresses(), "latest"], function (d) {
+        $("#balance").html("ETH balance: " + (d / 10 ** 18).toFixed(3) + " ETH");
+    })
+
+    req("eth_call", [{
+        "to": platform.tokenContract,
+        "data": "0x70a08231" + pad(ks.getAddresses(), 64)
+    }, "latest"], function (d) {
+        $("#token").html("BET balance:" + (d / 10 ** 8) + " BET");
+    })
+}, 3000)
 
 // "0x47cae14fdb7974faa631d3fa5d8a17e4bb8224cf",10,10,0,123,27,"0x3a8a9441a7cd864860f929c9085de465c7c146aa97ed56be5a43951dc8fe3444","0x2eade1dc003c70a6d74a2111a373aebaf6f4c336377f620572b5c0383a8f43d5"

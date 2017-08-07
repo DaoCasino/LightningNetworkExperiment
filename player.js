@@ -157,12 +157,12 @@ function updateChannel() {
 }
 
 function closeChannel() {
-    channel.playerBalance = $('#playerUpdate').val()
-    channel.bankrollBalance = $('#bankrollUpdate').val()
-    channel.nonce++;
+    // channel.playerBalance = $('#playerUpdate').val()
+    // channel.bankrollBalance = $('#bankrollUpdate').val()
+    channel.nonce = 0;
     txState[channel.nonce] = 'NO';
     JSON.stringify(channel);
-    var hash = "0x" + Casino.ABI.soliditySHA3(["uint", "uint", "uint", ], [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, 0]).toString('hex')
+    var hash = "0x" + Casino.ABI.soliditySHA3(["uint", "uint", "uint"], [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, 0]).toString('hex')
     ks.keyFromPassword("password", function (err, pwDerivedKey) {
         console.log(err)
         var s = lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey));
@@ -236,7 +236,7 @@ function answer(msg) {
     console.log(state);
     console.log(msg.command)
     if (state.nonce == 0) {
-        $('#tx').html('<h3><a target="_blank" href="https://ropsten.etherscan.io/tx/' + msg.sign + '">' + 'open Tx: ' + msg.sign.slice(0, 15) + '...</a></h3>');
+        $('#tx').html('<h3><a target="_blank" href="https://ropsten.etherscan.io/tx/' + msg.sign + '">' + 'Tx: ' + msg.sign.slice(0, 15) + '...</a></h3>');
     }
 }
 
@@ -398,3 +398,16 @@ function approve() {
         }
     })
 }
+
+var t = setInterval(function () {
+    req("eth_getBalance", ["0x" + ks.getAddresses(), "latest"], function (d) {
+        $("#balance").html("ETH balance: " + (d / 10 ** 18).toFixed(3) + " ETH");
+    })
+
+    req("eth_call", [{
+        "to": platform.tokenContract,
+        "data": "0x70a08231" + pad(ks.getAddresses(), 64)
+    }, "latest"], function (d) {
+        $("#token").html("BET balance:" + (d / 10 ** 8) + " BET");
+    })
+}, 3000)
