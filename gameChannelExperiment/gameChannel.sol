@@ -1,4 +1,4 @@
-pragma solidity ^ 0.4 .13;
+pragma solidity ^0.4.13;
 
 contract ERC20 {
     function transfer(address _to, uint256 _value);
@@ -17,14 +17,20 @@ contract gameChannel {
         uint bankrollDeposit;
         uint nonce;
         uint endTime;
-        bytes32 disputSeed;
+    }
+
+    struct Dispute{
+        uint nonce;
+        bytes32 seed;
+        uint chance;
+        uint bet;
     }
 
     mapping(bytes32 => Channel) public channels;
-    mapping(bytes32 => bool) public usedRandom;
+    mapping(bytes32 => Dispute) public disputes;
 
-    modifier timeout(Channel storage self) {
-        require(self.endTime <= block.number);
+    modifier timeout(Channel c) {
+        require(c.endTime <= block.number);
         _;
     }
 
@@ -33,7 +39,7 @@ contract gameChannel {
         assert(ecrecover(sha3(id, player, playerDeposit, bankrollDeposit, nonce, time), v, r, s) == player);
         assert(token.transferFrom(player, this, playerDeposit));
         assert(token.transferFrom(msg.sender, this, bankrollDeposit));
-        channels[id] = Channel(player, msg.sender, playerDeposit, bankrollDeposit, nonce, block.number + time, 0);
+        channels[id] = Channel(player, msg.sender, playerDeposit, bankrollDeposit, nonce, block.number + time);
     }
 
     function recoverSigner(bytes32 h, bytes signature) returns(address) {
@@ -47,17 +53,24 @@ contract gameChannel {
         address stateSigner = recoverSigner(sha3(id, seed, nonce, bet, chance) , sig);
         
         Channel memory c = channels[id];
+        Dispute memory d = disputes[id];
         
+        assert(d.nonce < nonce);
+        assert(c.nonce < nonce);
         assert(msg.sender == c.player || msg.sender == c.bankroller);
         assert(stateSigner != msg.sender);
         assert(c.bankroller == seedSigner);
-        assert(!usedRandom[seed]);
 
         uint profit = (bet * (65536 - 1310) / chance) - bet;
-        uint rnd = uint256(sha3(sigseed)) % 65536;
+        uint rnd = uint256(sha3(sigseed, nonce, id)) % 65536;
+
+         if(c.endTime - block.number < 10)
+        {
+            channels[id].endTime += 10;
+        }
 
         if (profit > c.bankrollDeposit) {
-            //TODO profit = deposit or profit = maxProfit
+            profit = c.bankrollDeposit;
         }
 
         if (rnd < chance) {
@@ -69,11 +82,52 @@ contract gameChannel {
             channels[id].playerDeposit -= bet;
             channels[id].bankrollDeposit += bet;
         }
-        usedRandom[seed] = true;
+        channels[id].nonce = nonce;
+        delete disputes[id];
     }
 
-    function disput(bytes32 id, bytes32 seed, uint nonce, uint bet, uint chance, bytes sig) timeout(channels[id]) {
+    function openDispute(bytes32 id, bytes32 seed, uint nonce, uint bet, uint chance) timeout(channels[id]) {
+        Channel memory c = channels[id];
+        assert(c.nonce < nonce);
+        assert(msg.sender == c.player);
+        if(c.endTime - block.number < 10)
+        {
+            channels[id].endTime += 10;
+        }
+        disputes[id].seed = seed;
+        disputes[id].nonce = nonce;
+        disputes[id].bet = bet;
+        disputes[id].chance = chance;
 
+    }
+
+    function closeDispute(bytes32 id, bytes sigseed) {
+        Channel memory c = channels[id];
+        Dispute memory d = disputes[id];
+        assert(d.seed != 0);
+        address signer = recoverSigner(d.seed,sigseed);
+        assert(signer == c.bankroller);
+
+        uint profit = (d.bet * (65536 - 1310) / d.chance) - d.bet;
+        uint rnd = uint256(sha3(sigseed, d.nonce, id)) % 65536;
+        if (profit > c.bankrollDeposit) {
+            profit = c.bankrollDeposit;
+        }
+        if (rnd < d.chance) {
+            channels[id].bankrollDeposit -= profit;
+            channels[id].playerDeposit += profit;
+        } else {
+            channels[id].playerDeposit -= d.bet;
+            channels[id].bankrollDeposit += d.bet;
+        }
+        closeChannel(id);
+    }
+
+    function closeChannel(bytes32 id) internal {
+        Channel memory c = channels[id];
+        token.transfer(c.player, c.playerDeposit);
+        token.transfer(c.bankroller, c.bankrollDeposit);
+        delete channels[id];
     }
 
     function closeByConsent(bytes32 id, uint playerDeposit, uint bankrollDeposit, uint nonce, bytes sig)  timeout(channels[id]) {
@@ -82,17 +136,19 @@ contract gameChannel {
         assert(nonce == 0);
         assert(signer != msg.sender && signer == c.player || signer == c.bankroller);
     
-        token.transfer(c.player, c.playerDeposit);
-        token.transfer(c.bankroller, c.bankrollDeposit);
-        delete channels[id];
+        closeChannel(id);
     }
 
     function closeByTime(bytes32 id){
         Channel memory c = channels[id];
-        assert(c.endTime < block.number)
-        token.transfer(c.player, c.playerDeposit);
-        token.transfer(c.bankroller, c.bankrollDeposit);
-        delete channels[id];
+        Dispute memory d = disputes[id];
+        assert(c.endTime <= block.number);
+        if(d.seed != 0){
+        uint profit = (d.bet * (65536 - 1310) / d.chance) - d.bet;
+        channels[id].playerDeposit += profit;
+        channels[id].bankrollDeposit -= profit; 
+        }
+        closeChannel(id);
     }
 
     function signatureSplit(bytes signature) returns(bytes32 r, bytes32 s, uint8 v) {
