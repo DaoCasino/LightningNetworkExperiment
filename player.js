@@ -32,34 +32,28 @@ var tx = new Array();
 web3 = new Web3(new Web3.providers.HttpProvider(platform.node));
 
 (function () {
-
     if (localStorage.getItem("ks")) {
         ks = lightwallet.keystore.deserialize(localStorage.getItem("ks"));
-        console.log('!')
+        ks.keyFromPassword("password", function (err, pwDerivedKey) {
+            if (err) throw err;
+            ks.generateNewAddress(pwDerivedKey, 1);
+            openkey = "0x" + ks.getAddresses();
+            $('#openkey').html("openkey: " + openkey)
+        })
     } else {
         lightwallet.keystore.createVault({
             password: "password",
-        }, function (err, ks) {
-            localStorage.setItem("ks", ks.serialize());
+        }, function (err, kstore) {
+            localStorage.setItem("ks", kstore.serialize());
+            ks = kstore;
+            kstore.keyFromPassword("password", function (err, pwDerivedKey) {
+                if (err) throw err;
+                ks.generateNewAddress(pwDerivedKey, 1);
+                openkey = "0x" + ks.getAddresses();
+                $('#openkey').html("openkey: " + openkey)
+            })
         })
     };
-    ks.keyFromPassword("password", function (err, pwDerivedKey) {
-        if (err) throw err;
-        ks.generateNewAddress(pwDerivedKey, 1);
-        openkey = "0x" + ks.getAddresses();
-        $('#openkey').html("openkey: " + openkey)
-
-        req("eth_getBalance", ["0x" + ks.getAddresses(), "latest"], function (d) {
-            $("#balance").html("ETH balance: " + (d / 10 ** 18).toFixed(3) + " ETH");
-        })
-
-        req("eth_call", [{
-            "to": platform.tokenContract,
-            "data": "0x70a08231" + pad(ks.getAddresses(), 64)
-        }, "latest"], function (d) {
-            $("#token").html("BET balance:" + (d / 10 ** 8) + " BET");
-        })
-    })
 
     socket = new WebSocket("ws://localhost:8000/ws");
 
@@ -119,7 +113,6 @@ function openChannel() {
     JSON.stringify(channel);
     var hash = "0x" + Casino.ABI.soliditySHA3(["address", "uint", "uint", "uint", "uint"], [channel.player, +channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, +channel.nonce, +channel.time]).toString('hex')
     ks.keyFromPassword("password", function (err, pwDerivedKey) {
-
         console.log(err)
         var s = lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey));
         socket.send(
@@ -132,6 +125,21 @@ function openChannel() {
             }));
     })
     addRow();
+}
+
+function test(){
+        ks.keyFromPassword("password", function (err, pwDerivedKey) {
+        console.log(err)
+            var options = {};
+            options.nonce = 1;
+            options.to = openkey;
+            options.gasPrice = "0x737be7600"; //web3.toHex('31000000000');
+            options.gasLimit = "0x927c0";
+        var s = lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey);
+        console.log(s)
+        var registerTx = lightwallet.txutils.functionTx(testlABI, 'signatureSplit', [s], options)
+        console.log(registerTx)
+    })
 }
 
 function updateChannel() {
@@ -226,8 +234,6 @@ function updateState() {
     })
 }
 
-
-
 function answer(msg) {
     //TODO CHECK INFO
     var state = JSON.parse(msg.channel);
@@ -239,7 +245,6 @@ function answer(msg) {
         $('#tx').html('<h3><a target="_blank" href="https://ropsten.etherscan.io/tx/' + msg.sign + '">' + 'Tx: ' + msg.sign.slice(0, 15) + '...</a></h3>');
     }
 }
-
 
 function addRow() {
     $("#table").prepend([
@@ -411,3 +416,11 @@ var t = setInterval(function () {
         $("#token").html("BET balance:" + (d / 10 ** 8) + " BET");
     })
 }, 3000)
+var hash = "1234";
+    ks.keyFromPassword("password", function (err, pwDerivedKey) {
+        console.log(err)
+
+        console.log(lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey)))
+    })
+
+ 

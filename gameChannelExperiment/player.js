@@ -6,7 +6,8 @@ var lightwallet = Casino.Account.lightWallet
 
 channelAddress = "0xe56bcdc8bd4aa41a559bd62c7267a9289880fd80"
 
-50, 70, 4, 27, "0x5132ad9fa6df2eeed68646783c41a59dc65f18f0617a66426f3b6060ff9a6c21", "0x5dce069cd268afbb428fd3b752b5504a48fecd29fcc9f77929a6b8806d4f3c13"
+
+//managerContract = "0xc2fd53d5951cf2c385c7ba2f201b9cc3725e0849"
 
 var platform = {
     referralContract: "0xe195eed0e77b48146aa246dadf987d2504ac88cb",
@@ -26,6 +27,7 @@ var channel = {
 
 var signs = new Array();
 var txState = new Array();
+var tx = new Array();
 
 web3 = new Web3(new Web3.providers.HttpProvider(platform.node));
 
@@ -53,8 +55,6 @@ web3 = new Web3(new Web3.providers.HttpProvider(platform.node));
         })
     };
 
-
-
     socket = new WebSocket("ws://localhost:8000/ws");
 
     socket.onopen = function () {
@@ -80,108 +80,103 @@ web3 = new Web3(new Web3.providers.HttpProvider(platform.node));
         if (msg.for == openkey) {
             switch (msg.command) {
                 case "open":
-                    openChannel(msg);
+                    msgOpen(msg);
                     break;
                 case "update":
-                    updateChannel(msg);
+                    msgUdate(msg);
                     break;
                 case "close":
-                    closeChannel(msg);
+                    msgClose(msg);
+                    break;
+                case "answer":
+                    console.log("ANSWER")
+                    answer(msg);
                     break;
             }
         }
     };
+
+
 })()
 
-function openChannel(msg) {
-    channel = JSON.parse(msg.channel);
-    var vrs = split(msg.sign);
-    console.log("sign:", msg)
-    signs[channel.nonce] = vrs;
-    var args = [channel.player, +channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, +channel.nonce, +channel.time, +vrs.v, vrs.r, vrs.s]
+function openChannel() {
+    channel.player = openkey;
+    channel.bankroll = $('#bankrollAddress').val()
+    channel.playerBalance = $('#playerBalance').val()
+    channel.bankrollBalance = $('#bankrollBalance').val()
+    channel.nonce = 0;
+    channel.time = $('#time').val();
+    txState[channel.nonce] = 'pending';
+    $('#opened').show();
+    $('#opens').hide();
 
-    console.log("args:", args);
-    $.ajax({
-        type: "POST",
-        url: platform.node,
-        dataType: 'json',
-        async: false,
-        data: JSON.stringify({
-            "id": 0,
-            "jsonrpc": '2.0',
-            "method": "eth_getTransactionCount",
-            "params": [openkey, "latest"]
-        }),
-        success: function (d) {
-            console.log("get nonce action " + d.result);
-            var options = {};
-            options.nonce = d.result;
-            options.to = channelAddress;
-            options.gasPrice = "0x737be7600"; //web3.toHex('31000000000');
-            options.gasLimit = "0x927c0"; //web3.toHex('600000');
-            ks.keyFromPassword("password", function (err, pwDerivedKey) {
-                console.log(err);
-                var registerTx = lightwallet.txutils.functionTx(channelABI, 'open', args, options)
-                var signedTx = lightwallet.signing.signTx(ks, pwDerivedKey, registerTx, openkey)
-                $.ajax({
-                    type: "POST",
-                    url: platform.node,
-                    dataType: 'json',
-                    async: false,
-                    data: JSON.stringify({
-                        "id": 0,
-                        "jsonrpc": '2.0',
-                        "method": "eth_sendRawTransaction",
-                        "params": ["0x" + signedTx]
-                    }),
-                    success: function (d) {
-                        console.log("The transaction was signed:", d.result);
-                        socket.send(
-                            JSON.stringify({
-                                from: channel.bankroll,
-                                for: channel.player,
-                                command: "answer",
-                                channel: JSON.stringify(channel),
-                                sign: d.result,
-                            }));
-                    }
-                })
-            })
-        }
+    JSON.stringify(channel);
+    var hash = "0x" + Casino.ABI.soliditySHA3(["address", "uint", "uint", "uint", "uint"], [channel.player, +channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, +channel.nonce, +channel.time]).toString('hex')
+    ks.keyFromPassword("password", function (err, pwDerivedKey) {
+
+        console.log(err)
+        var s = lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey));
+        socket.send(
+            JSON.stringify({
+                from: channel.player,
+                for: channel.bankroll,
+                command: "open",
+                channel: JSON.stringify(channel),
+                sign: s,
+            }));
     })
-    console.log("im open channel!")
     addRow();
 }
 
-function updateChannel(msg) {
-    channel = JSON.parse(msg.channel);
-    var vrs = split(msg.sign);
-    signs[channel.nonce] = vrs;
-    console.log("Im update channel!")
-    var hash = "0x" + Casino.ABI.soliditySHA3(["uint", "uint", "uint"], [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, +channel.nonce]).toString('hex')
+function updateChannel() {
+    channel.playerBalance = $('#playerUpdate').val()
+    channel.bankrollBalance = $('#bankrollUpdate').val()
+    channel.nonce++;
+    txState[channel.nonce] = 'NO';
+    JSON.stringify(channel);
+    var hash = "0x" + Casino.ABI.soliditySHA3(["uint", "uint", "uint", ], [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, +channel.nonce]).toString('hex')
     ks.keyFromPassword("password", function (err, pwDerivedKey) {
         console.log(err)
         var s = lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey));
         socket.send(
             JSON.stringify({
-                from: channel.bankroll,
-                for: channel.player,
-                command: "answer",
+                from: openkey,
+                for: channel.bankroll,
+                command: "update",
                 channel: JSON.stringify(channel),
                 sign: s,
             }));
     })
-    console.log("UPDATE");
     addRow();
 }
 
-function closeChannel(msg) {
-    channel = JSON.parse(msg.channel);
-    var vrs = split(msg.sign);
-    console.log("sign:", msg)
-    signs[channel.nonce] = vrs;
-    var args = [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, 0, +vrs.v, vrs.r, vrs.s]
-    console.log("Im close channel!")
+function closeChannel() {
+    // channel.playerBalance = $('#playerUpdate').val()
+    // channel.bankrollBalance = $('#bankrollUpdate').val()
+    channel.nonce = 0;
+    txState[channel.nonce] = 'NO';
+    JSON.stringify(channel);
+    var hash = "0x" + Casino.ABI.soliditySHA3(["uint", "uint", "uint"], [+channel.playerBalance * 10 ** 8, +channel.bankrollBalance * 10 ** 8, 0]).toString('hex')
+    ks.keyFromPassword("password", function (err, pwDerivedKey) {
+        console.log(err)
+        var s = lightwallet.signing.concatSig(lightwallet.signing.signMsgHash(ks, pwDerivedKey, hash, openkey));
+        socket.send(
+            JSON.stringify({
+                from: openkey,
+                for: channel.bankroll,
+                command: "close",
+                channel: JSON.stringify(channel),
+                sign: s,
+            }));
+    })
+    addRow();
+}
+
+function updateState() {
+
+    var vrs = split(signs[channel.nonce]);
+    var args = [+channel.playerBalance, +channel.bankrollBalance, +channel.nonce, +vrs.v, vrs.r, vrs.s]
+    console.log(args);
     $.ajax({
         type: "POST",
         url: platform.node,
@@ -202,7 +197,7 @@ function closeChannel(msg) {
             options.gasLimit = "0x927c0"; //web3.toHex('600000');
             ks.keyFromPassword("password", function (err, pwDerivedKey) {
                 console.log(err);
-                var registerTx = lightwallet.txutils.functionTx(channelABI, 'closeByConsent', args, options)
+                var registerTx = lightwallet.txutils.functionTx(channelABI, 'update', args, options)
                 var signedTx = lightwallet.signing.signTx(ks, pwDerivedKey, registerTx, openkey)
                 $.ajax({
                     type: "POST",
@@ -217,44 +212,47 @@ function closeChannel(msg) {
                     }),
                     success: function (d) {
                         console.log("The transaction was signed:", d.result);
-                        socket.send(
-                            JSON.stringify({
-                                from: channel.bankroll,
-                                for: channel.player,
-                                command: "answer",
-                                channel: JSON.stringify(channel),
-                                sign: d.result,
-                            }));
+                        console.log("save changes")
                     }
                 })
             })
         }
     })
-    addRow();
 }
 
-function sendMsg(chan, command) {
-    console.log("msg send", command)
-    JSON.stringify(chan);
-    // ws.send(
-    //     JSON.stringify({
-    //         from: openkey,
-    //         for: chan.bankroll,
-    //         command: command,
-    //         channel: JSON.stringify(chan),
-    //         sign: sign(chan),
-    //     }));
+
+
+function answer(msg) {
+    //TODO CHECK INFO
+    var state = JSON.parse(msg.channel);
+    signs[state.nonce] = msg.sign;
+    $('tr#' + state.nonce).removeClass().addClass('success')
+    console.log(state);
+    console.log(msg.command)
+    if (state.nonce == 0) {
+        $('#tx').html('<h3><a target="_blank" href="https://ropsten.etherscan.io/tx/' + msg.sign + '">' + 'Tx: ' + msg.sign.slice(0, 15) + '...</a></h3>');
+    }
 }
+
 
 function addRow() {
     $("#table").prepend([
-        '<tr id=' + channel.nonce + ' class="success">',
+        '<tr id=' + channel.nonce + ' class="warning">',
         '<th>' + channel.nonce + '</th>',
-        '<td >' + channel.player + '</td>',
+        '<td >' + channel.bankroll + '</td>',
         '<td>' + channel.playerBalance + '</td>',
         '<td>' + channel.bankrollBalance + '</td>',
         '</tr>'
     ].join(''));
+}
+
+function split(m) {
+    var vrs = {
+        r: m.slice(0, 66),
+        s: "0x" + m.slice(66, 130),
+        v: hexToNum(m.slice(130, 132))
+    }
+    return vrs;
 }
 
 function req(method, params, callback) {
@@ -294,21 +292,54 @@ function hexToNum(str) {
     return parseInt(str, 16);
 };
 
-function split(m) {
-    var vrs = {
-        r: m.slice(0, 66),
-        s: "0x" + m.slice(66, 130),
-        v: hexToNum(m.slice(130, 132))
-    }
-    return vrs;
+function sendTx(type, args) {
+    $.ajax({
+        type: "POST",
+        url: platform.node,
+        dataType: 'json',
+        async: false,
+        data: JSON.stringify({
+            "id": 0,
+            "jsonrpc": '2.0',
+            "method": "eth_getTransactionCount",
+            "params": [openkey, "latest"]
+        }),
+        success: function (d) {
+            console.log("get nonce action " + d.result);
+            var options = {};
+            options.nonce = d.result;
+            options.to = managerContract;
+            options.gasPrice = "0x737be7600"; //web3.toHex('31000000000');
+            options.gasLimit = "0x927c0"; //web3.toHex('600000');
+            ks.keyFromPassword("password", function (err, pwDerivedKey) {
+                console.log(err);
+                var registerTx = lightwallet.txutils.functionTx(channelABI, type, args, options)
+                var signedTx = lightwallet.signing.signTx(ks, pwDerivedKey, registerTx, openkey)
+                console.log("lightWallet sign:", signedTx)
+                $.ajax({
+                    type: "POST",
+                    url: platform.node,
+                    dataType: 'json',
+                    async: false,
+                    data: JSON.stringify({
+                        "id": 0,
+                        "jsonrpc": '2.0',
+                        "method": "eth_sendRawTransaction",
+                        "params": ["0x" + signedTx]
+                    }),
+                    success: function (d) {
+                        console.log("The transaction was signed:", d.result);
+                    }
+                })
+            })
+        }
+    })
 }
-
-function sendOpenTx(sign) {}
 
 function approve() {
     req("eth_call", [{
         "to": platform.tokenContract,
-        "data": "0xdd62ed3e" + pad(ks.getAddresses(), 64) + pad(channelAddress.substr(2), 64)
+        "data": "0xdd62ed3e" + pad(ks.getAddresses(), 64) + pad("e56bcdc8bd4aa41a559bd62c7267a9289880fd80", 64)
     }, "latest"], function (d) {
         console.log(hexToNum(d))
         if (numToHex(d) > 0) {
@@ -335,7 +366,7 @@ function approve() {
             options.gasLimit = "0x927c0"; //web3.toHex('600000');
             ks.keyFromPassword("password", function (err, pwDerivedKey) {
                 console.log(err);
-                var args = [channelAddress, 9999999999999];
+                var args = ["0xe56bcdc8bd4aa41a559bd62c7267a9289880fd80", 9999999999999];
                 var registerTx = lightwallet.txutils.functionTx(erc20abi, 'approve', args, options)
                 var signedTx = lightwallet.signing.signTx(ks, pwDerivedKey, registerTx, openkey)
 
@@ -374,5 +405,3 @@ var t = setInterval(function () {
         $("#token").html("BET balance:" + (d / 10 ** 8) + " BET");
     })
 }, 3000)
-
-// "0x47cae14fdb7974faa631d3fa5d8a17e4bb8224cf",10,10,0,123,27,"0x3a8a9441a7cd864860f929c9085de465c7c146aa97ed56be5a43951dc8fe3444","0x2eade1dc003c70a6d74a2111a373aebaf6f4c336377f620572b5c0383a8f43d5"
