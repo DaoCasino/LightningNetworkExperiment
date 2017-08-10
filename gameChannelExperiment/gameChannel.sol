@@ -46,6 +46,8 @@ contract gameChannel {
         var (r, s, v) = signatureSplit(signature);
         return ecrecover(h, v, r, s);
     }
+    
+    
 
     function update(bytes32 id, bytes32 seed, uint nonce, uint bet, uint chance, bytes sig, bytes sigseed) timeout(channels[id]) {
         
@@ -53,9 +55,8 @@ contract gameChannel {
         address stateSigner = recoverSigner(sha3(id, seed, nonce, bet, chance) , sig);
         
         Channel memory c = channels[id];
-        Dispute memory d = disputes[id];
         
-        assert(d.nonce < nonce);
+        assert(disputes[id].nonce < nonce);
         assert(c.nonce < nonce);
         assert(msg.sender == c.player || msg.sender == c.bankroller);
         assert(stateSigner != msg.sender);
